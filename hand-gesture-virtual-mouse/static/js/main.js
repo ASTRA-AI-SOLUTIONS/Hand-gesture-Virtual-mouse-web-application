@@ -39,6 +39,9 @@ const sliderTrack = document.getElementById('slider-track');
 const sliderFill = document.getElementById('slider-fill');
 const sliderThumb = document.getElementById('slider-thumb');
 const speedText = document.getElementById('speed-text');
+const startCameraBtn = document.getElementById('start-camera-btn');
+const connectionNoticeTitle = document.getElementById('connection-notice-title');
+const connectionNoticeText = document.getElementById('connection-notice-text');
 
 // Mediapipe Initialization
 let handLandmarker;
@@ -59,10 +62,24 @@ async function initializeHandTracking() {
         statusModel.className = "w-2 h-2 rounded-full glow-cyan bg-cyan-400";
         textModel.textContent = "Vision Model: Loaded";
         
-        enableCamera();
+        if (startCameraBtn) {
+            startCameraBtn.textContent = "Initialize Camera";
+            startCameraBtn.className = "mt-6 px-6 py-3 glass hover:bg-sky-900/50 text-cyan-400 text-xs font-bold uppercase tracking-widest border border-cyan-400/30 rounded transition-colors cursor-pointer pointer-events-auto";
+            startCameraBtn.disabled = false;
+        }
     } catch(err) {
         console.error("Failed to load MediaPipe model:", err);
+        if (startCameraBtn) {
+            startCameraBtn.textContent = "Model Load Failed";
+        }
     }
+}
+
+if (startCameraBtn) {
+    startCameraBtn.addEventListener('click', () => {
+        startCameraBtn.textContent = "Requesting Access...";
+        enableCamera();
+    });
 }
 
 async function enableCamera() {
@@ -70,14 +87,20 @@ async function enableCamera() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
         video.srcObject = stream;
         video.addEventListener("loadeddata", () => {
-            video.play();
+            video.play().catch(e => console.error("Play error:", e));
             statusCamera.className = "w-2 h-2 rounded-full glow-cyan bg-cyan-400";
             textCamera.textContent = "Camera: Active";
+            
+            if (startCameraBtn) startCameraBtn.style.display = "none";
+            if (connectionNoticeTitle) connectionNoticeTitle.textContent = "Camera Active";
+            if (connectionNoticeText) connectionNoticeText.textContent = "Position hand in camera view to begin tracking";
+            
             predictWebcam();
         });
     } catch(err) {
         console.error("Camera access denied or unavilable:", err);
-        alert("Please allow camera access to use the virtual mouse.");
+        if (startCameraBtn) startCameraBtn.textContent = "Camera Blocked";
+        alert("Camera blocked. Please tap 'aA' in Safari's address bar to allow Camera access, or check your device settings.");
     }
 }
 

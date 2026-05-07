@@ -28,7 +28,7 @@
     
     <div class="absolute inset-0 scanline z-0 pointer-events-none"></div>
     
-    <video id="camera-feed" class="hidden" playsinline muted></video>
+    <video id="camera-feed" class="hidden" autoplay playsinline webkit-playsinline muted></video>
 
     <!-- Sidebar Dashboard -->
     <aside class="w-64 glass border-r border-sky-500/20 p-6 flex flex-col justify-between z-10 relative">
@@ -67,8 +67,11 @@
     <main class="flex-1 p-8 relative z-10 grid gap-8 grid-cols-2 grid-rows-2">
         <div id="connection-notice" class="absolute inset-0 glass backdrop-blur-md z-20 flex flex-col items-center justify-center m-8 rounded-xl border border-sky-500/30">
             <i data-lucide="hand" class="w-16 h-16 text-cyan-400 mb-4 animate-pulse glow-cyan"></i>
-            <h2 class="text-xl font-bold text-cyan-400 tracking-widest uppercase">Awaiting Gesture Input</h2>
-            <p class="text-[10px] text-sky-400 uppercase tracking-widest mt-2">Position hand in camera view to initialize session</p>
+            <h2 id="connection-notice-title" class="text-xl font-bold text-cyan-400 tracking-widest uppercase">System Initialization</h2>
+            <p id="connection-notice-text" class="text-[10px] text-sky-400 uppercase tracking-widest mt-2">Safari requires interaction to enable camera</p>
+            <button id="start-camera-btn" disabled class="mt-6 px-6 py-3 bg-sky-950/50 text-sky-600 text-xs font-bold uppercase tracking-widest border border-sky-900/50 rounded transition-colors cursor-not-allowed">
+                Loading Vision Model...
+            </button>
         </div>
 
         <!-- Panel 1: System Power Switch -->
