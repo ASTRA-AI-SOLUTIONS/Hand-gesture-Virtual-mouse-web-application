@@ -73,6 +73,7 @@ async function initializeHandTracking() {
         modelReady = true;
         
         if (cameraReady) {
+            if (connectionNoticeText) connectionNoticeText.textContent = "Position hand in camera view to begin tracking";
             predictWebcam();
         }
     } catch(err) {
@@ -105,9 +106,11 @@ async function enableCamera() {
             
             if (startCameraBtn) startCameraBtn.style.display = "none";
             if (connectionNoticeTitle) connectionNoticeTitle.textContent = "System Ready";
-            if (connectionNoticeText) connectionNoticeText.textContent = "Position hand in camera view to begin tracking";
             
-            if (modelReady) {
+            if (!modelReady) {
+                if (connectionNoticeText) connectionNoticeText.textContent = "Waiting for Vision Model (Downloading...)";
+            } else {
+                if (connectionNoticeText) connectionNoticeText.textContent = "Position hand in camera view to begin tracking";
                 predictWebcam();
             }
         });
