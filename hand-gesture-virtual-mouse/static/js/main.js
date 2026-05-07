@@ -1,4 +1,9 @@
-import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.js";
+import { HandLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+window.addEventListener('error', (e) => {
+    const notice = document.getElementById('connection-notice-text');
+    if (notice) notice.textContent = 'JS Error: ' + e.message;
+});
 
 // Global App State
 let isPinching = false;
@@ -7,6 +12,10 @@ let sysPower = true;
 let alarmActive = false;
 let conveyorSpeed = 50;
 let isDraggingSlider = false;
+
+// Initialization Flags
+let cameraReady = false;
+let modelReady = false;
 
 // Cursor Smoothing 
 let targetCursorX = window.innerWidth / 2;
@@ -61,16 +70,56 @@ async function initializeHandTracking() {
         
         statusModel.className = "w-2 h-2 rounded-full glow-cyan bg-cyan-400";
         textModel.textContent = "Vision Model: Loaded";
+        modelReady = true;
         
-        if (startCameraBtn) {
-            startCameraBtn.textContent = "Initialize Camera";
-            startCameraBtn.className = "mt-6 px-6 py-3 glass hover:bg-sky-900/50 text-cyan-400 text-xs font-bold uppercase tracking-widest border border-cyan-400/30 rounded transition-colors cursor-pointer pointer-events-auto";
-            startCameraBtn.disabled = false;
+        if (cameraReady) {
+            predictWebcam();
         }
     } catch(err) {
         console.error("Failed to load MediaPipe model:", err);
+    }
+}
+
+async function enableCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (connectionNoticeTitle) connectionNoticeTitle.textContent = "Camera API Missing";
+        if (connectionNoticeText) connectionNoticeText.textContent = "Please ensure the site is loaded over HTTPS (secure).";
+        console.error("navigator.mediaDevices is undefined.");
+        return;
+    }
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                width: { ideal: 640 }, 
+                height: { ideal: 480 },
+                facingMode: "user"
+            } 
+        });
+        video.srcObject = stream;
+        video.addEventListener("loadeddata", () => {
+            video.play().catch(e => console.error("Play error:", e));
+            statusCamera.className = "w-2 h-2 rounded-full glow-cyan bg-cyan-400";
+            textCamera.textContent = "Camera: Active";
+            cameraReady = true;
+            
+            if (startCameraBtn) startCameraBtn.style.display = "none";
+            if (connectionNoticeTitle) connectionNoticeTitle.textContent = "System Ready";
+            if (connectionNoticeText) connectionNoticeText.textContent = "Position hand in camera view to begin tracking";
+            
+            if (modelReady) {
+                predictWebcam();
+            }
+        });
+    } catch(err) {
+        console.error("Camera access denied or unavilable:", err);
+        if (connectionNoticeTitle) connectionNoticeTitle.textContent = "Camera Blocked";
+        if (connectionNoticeText) connectionNoticeText.textContent = "Please allow camera access in your browser via the URL bar icon";
         if (startCameraBtn) {
-            startCameraBtn.textContent = "Model Load Failed";
+            startCameraBtn.style.display = "block";
+            startCameraBtn.textContent = "Retry Camera Connection";
+            startCameraBtn.disabled = false;
+            startCameraBtn.className = "mt-6 px-6 py-3 glass hover:bg-sky-900/50 text-cyan-400 text-xs font-bold uppercase tracking-widest border border-cyan-400/30 rounded transition-colors cursor-pointer pointer-events-auto";
         }
     }
 }
@@ -80,28 +129,6 @@ if (startCameraBtn) {
         startCameraBtn.textContent = "Requesting Access...";
         enableCamera();
     });
-}
-
-async function enableCamera() {
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-        video.srcObject = stream;
-        video.addEventListener("loadeddata", () => {
-            video.play().catch(e => console.error("Play error:", e));
-            statusCamera.className = "w-2 h-2 rounded-full glow-cyan bg-cyan-400";
-            textCamera.textContent = "Camera: Active";
-            
-            if (startCameraBtn) startCameraBtn.style.display = "none";
-            if (connectionNoticeTitle) connectionNoticeTitle.textContent = "Camera Active";
-            if (connectionNoticeText) connectionNoticeText.textContent = "Position hand in camera view to begin tracking";
-            
-            predictWebcam();
-        });
-    } catch(err) {
-        console.error("Camera access denied or unavilable:", err);
-        if (startCameraBtn) startCameraBtn.textContent = "Camera Blocked";
-        alert("Camera blocked. Please tap 'aA' in Safari's address bar to allow Camera access, or check your device settings.");
-    }
 }
 
 // Main Prediction Loop
@@ -267,5 +294,4 @@ function updateSliderStyles() {
 
 // Start Program
 initializeHandTracking();
-enableCamera();
 updateUI();
