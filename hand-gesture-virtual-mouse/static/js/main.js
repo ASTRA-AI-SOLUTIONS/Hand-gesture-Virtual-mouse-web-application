@@ -267,4 +267,5 @@ function updateSliderStyles() {
 
 // Start Program
 initializeHandTracking();
+enableCamera();
 updateUI();
